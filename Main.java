@@ -12,7 +12,9 @@ public static void main(String[] args) {
 			public void run (){		
 		JFrame frame = new MainFrame("Company personal");		
 		frame.setVisible(true);
-		frame.setSize(1000, 1000);
+		frame.setSize(700, 850);
+		//frame.pack();
+		frame.setResizable(false);
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		
 		

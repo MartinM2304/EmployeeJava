@@ -1,4 +1,5 @@
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Container;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -30,6 +31,8 @@ public class MainFrame extends JFrame {
 	
 	
 	getContentPane().add (detailsPanel,BorderLayout.CENTER );
+	//detailsPanel.setBackground(Color.GRAY);
+	//getContentPane().setBackground(Color.RED);
 	
 	
 	

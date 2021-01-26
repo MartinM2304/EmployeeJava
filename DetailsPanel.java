@@ -10,25 +10,30 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.swing.table.*;
 import java.util.ArrayList;
-
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Scanner;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.FileReader;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.BufferedWriter;
 import java.io.BufferedReader;
 
 public class DetailsPanel extends JPanel {
 	
 	private JTable employeeTable;
-	DefaultTableModel employeeDefault;
+	DefaultTableModel employeeModel;
     private JScrollPane employeeScrollPane;
     //Buttons
-    private JButton addBtn = new JButton ("Add");
-    private JButton deleteBtn = new JButton ("Delete");
-    private JButton clearBtn = new JButton ("Clear");
-    private JButton saveBtn = new JButton ("Save");
-    private JButton loadBtn = new JButton ("Load");
+    private JButton addBtn = new JButton ();
+    private JButton deleteBtn = new JButton ();
+    private JButton clearBtn = new JButton ();
+    private JButton saveBtn = new JButton ();
+    private JButton loadBtn = new JButton ();
     //Labels
     private JLabel firstNameLabel;
     private JLabel lastNameLabel;
@@ -40,13 +45,15 @@ public class DetailsPanel extends JPanel {
     private JTextField lastNameField;
     private JTextField companyField;
     private JTextField adressField;
-    private JTextField salaryField;
+    private JNumberTextFieldd salaryField = new JNumberTextFieldd();
+    
     
     private File file;
 
 	public DetailsPanel() {
 		
-		setPreferredSize(new Dimension(800,800));
+		setPreferredSize(new Dimension(650,800));
+		
 		setLayout(null);
 		
 		//Title
@@ -66,23 +73,27 @@ public class DetailsPanel extends JPanel {
 		lastNameField = new JTextField(10);
 		companyField = new JTextField(10);
 		adressField= new JTextField(15);
-		salaryField= new JTextField(10);
+		//salaryField= new JTextField(10);
+		
+		salaryField.setMaxLength(10);
+		salaryField.setAllowNegative(false);
+		salaryField.setPrecision(1);
 		
 		//Table
 		
 		 
-		 employeeDefault = new DefaultTableModel();
-		 employeeDefault.addColumn("Name");
-		 employeeDefault.addColumn("Last Name");
-		 employeeDefault.addColumn("Company");
-		 employeeDefault.addColumn("Salary");
-		 employeeTable = new JTable(employeeDefault);
+		 employeeModel = new DefaultTableModel();
+		 employeeModel.addColumn("Name");
+		 employeeModel.addColumn("Last Name");
+		 employeeModel.addColumn("Company");
+		 employeeModel.addColumn("Salary");
+		 employeeTable = new JTable(employeeModel);
 		 
 		 
 		 //creating buttons and scroll panel
 		 addBtn = new JButton("Add");
 	     deleteBtn = new JButton("Delete");
-	     clearBtn = new JButton("Clear");
+	     clearBtn = new JButton("Clear text");
 	     saveBtn = new JButton ("Save");
 	     loadBtn = new JButton ("Load");
 		 employeeScrollPane = new JScrollPane(employeeTable);
@@ -92,6 +103,7 @@ public class DetailsPanel extends JPanel {
 		 
 		 //adding to panel
 		 add(firstNameLabel);
+		 
 		 add(lastNameLabel);
 		 add(companyLabel);
 		 add(salaryLabel);
@@ -102,10 +114,15 @@ public class DetailsPanel extends JPanel {
 		 
 		 add(employeeScrollPane);
 		 add(addBtn);
+		 //addBtn.setBackground(Color.GREEN);
 		 add(deleteBtn);
+		 //deleteBtn.setBackground(Color.GREEN);
 		 add(clearBtn);
+		 //clearBtn.setBackground(Color.GREEN);
 		 add(saveBtn);
+		 //saveBtn.setBackground(Color.GREEN);
 		 add(loadBtn);
+		 //loadBtn.setBackground(Color.GREEN);
 		 
 		 //adding bounds
 		 firstNameLabel.setBounds(60,30,100,30);
@@ -122,13 +139,14 @@ public class DetailsPanel extends JPanel {
 		 addBtn.setBounds(60, 160, 100, 50);
 		 deleteBtn.setBounds(300, 160, 100, 50);
 		 clearBtn.setBounds(540, 160, 100, 50);
-		 saveBtn .setBounds(60, 800, 100, 50);
-		 loadBtn.setBounds(540, 800, 100, 50);
+		 saveBtn .setBounds(60, 700, 100, 50);
+		 loadBtn.setBounds(540, 700, 100, 50);
 		 
 		 
-		 employeeScrollPane.setBounds(125, 255, 435, 285);
+		 employeeScrollPane.setBounds(100, 255, 500, 385);
 		 
 		 //creating the Table with Model
+		 //https://docs.oracle.com/javase/7/docs/api/javax/swing/table/TableModel.html - Kakvo å TableModel
 		 employeeTable.getSelectionModel().addListSelectionListener(x->{
 			 if(employeeTable.getSelectedRow() != -1) {
 			 firstNameField.setText(employeeTable.getValueAt(employeeTable.getSelectedRow(), 0).toString());
@@ -139,17 +157,17 @@ public class DetailsPanel extends JPanel {
 			 }
 		 });
 		 
-		 
-		 
-		 
+		 //adding action to the addBtn (When clicked)
 		 addBtn.addActionListener(new ActionListener() {
 
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
 				
 				double salary = Double.parseDouble(salaryField.getText());
-				Employee addNewData = new Employee (firstNameField.getText(), lastNameField.getText(), companyField.getText(),salary);
-				employeeDefault.addRow(new Object[] {addNewData.getFirstName(), addNewData.getLastName(),addNewData.getCompany(),addNewData.getSalary()} );
+				Employee addNewData = new Employee (firstNameField.getText(),lastNameField.getText(), companyField.getText(),salary);
+				employeeModel.addRow(new Object[] {addNewData.getFirstName(), addNewData.getLastName(),addNewData.getCompany(),addNewData.getSalary()} );
+				
+				
 				
 				firstNameField.setText ("");
 				lastNameField.setText ("");
@@ -184,7 +202,9 @@ public class DetailsPanel extends JPanel {
 				
 				int rowNumber = employeeTable.getSelectedRow();
 				
-				employeeDefault.removeRow(rowNumber);
+				employeeModel.removeRow(rowNumber);
+				
+				//refreshes the Table
 				employeeTable.repaint();
 				
 				firstNameField.setText ("");
@@ -195,28 +215,49 @@ public class DetailsPanel extends JPanel {
 			}
 			 
 		 });
-		 //reading the file
+		 //reading and loading the file
 		 loadBtn .addActionListener(new ActionListener() {
 
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				BufferedReader reader;
-				String line;
-				try {
-					reader = new BufferedReader(new FileReader(file));
-					while ((line = reader.readLine()) != null) {
-						employeeTable.add(null, line.split(","));
-					}
-					reader.close();
-	
-				} catch (Exception e1) {
-					
-					e1.printStackTrace();
+				@Override
+					public void actionPerformed(ActionEvent e) {
+						
+							String lineFirstName;
+							String lineLastName;
+							String lineCompany ;
+							String line3;
+
+							
+							for (int i = 0; i< employeeModel.getRowCount() ;i++) {
+								
+								employeeModel.removeRow(i);
+							}
+								File myObj = new File("filename.txt");
+								
+								try {
+									Scanner myReader = new Scanner(myObj);
+									while (myReader.hasNextLine()) {
+										lineFirstName = myReader.nextLine();
+										lineLastName = myReader.nextLine();
+									    lineCompany = myReader.nextLine();
+									    line3 = myReader.nextLine();
+									    double salary = Double.parseDouble(line3);
+										Employee addNewData = new Employee (lineFirstName,lineLastName , lineCompany ,salary);
+										employeeModel.addRow(new Object[] {addNewData.getFirstName(), addNewData.getLastName(),addNewData.getCompany(),addNewData.getSalary()} );
+										
+									}
+									myReader.close();
+								} catch (FileNotFoundException e2) {
+									try {
+										myObj.createNewFile();
+									} catch (IOException e1) {
+										
+										e1.printStackTrace();
+									}
+								
+								}
 				}
-				
-			}
-			 
-		 });
+	 
+		});
 		 //saving the file
 		 saveBtn .addActionListener(new ActionListener() {
 
@@ -225,18 +266,19 @@ public class DetailsPanel extends JPanel {
 				
 				try {
 					
-					FileWriter myWriter = new FileWriter("filename.txt",true);
+					FileWriter myWriter = new FileWriter("filename.txt",false);
 					
-					for (int i = 0; i< employeeDefault.getRowCount() ;i++) {
+					for (int i = 0; i< employeeModel.getRowCount() ;i++) {
 						
 						
-						for (int j =0; j <employeeDefault.getColumnCount();j++) {
+						for (int j =0; j <employeeModel.getColumnCount();j++) {
 							
 							 
-			                    myWriter.write(employeeDefault.getValueAt(i, j).toString() + "\n");
+			                    myWriter.write(employeeModel.getValueAt(i, j).toString() + " ");
 			                    myWriter.write("\n");
 			                    
 						}
+						
 					}
 					
 					myWriter.close();
@@ -253,7 +295,75 @@ public class DetailsPanel extends JPanel {
 		 }
 	
 }
-	            
+//								try {
+//								
+//										reader = new BufferedReader(new FileReader(file));
+//											while ((line = reader.readLine()) != null) {
+//													
+//													
+//													line1 = reader.readLine();
+//													line2 = reader.readLine();
+//													line3 = reader.readLine();
+//													double salary = Double.parseDouble(line3);
+//													Employee addNewData = new Employee (line,line1 , line2,salary);
+//													employeeDefault.addRow(new Object[] {addNewData.getFirstName(), addNewData.getLastName(),addNewData.getCompany(),addNewData.getSalary()} );
+//													
+//												}
+//											reader.close();
+//
+//								} catch (Exception e1) {
+//									
+//									e1.printStackTrace();
+//								}
+
+
+
+// 		 private JTextField salaryField;
+		
+
+
+
+//		 loadBtn .addActionListener(new ActionListener() {
+//
+//				@Override
+//				public void actionPerformed(ActionEvent e) {
+//					BufferedReader reader;
+//					
+//					try {
+//						
+//						reader = new BufferedReader(new InputStreamReader(new FileInputStream(file)));
+//						
+//						Map<String, Object[]> result = new LinkedHashMap <String,Object[]>();
+//						
+//						while (reader.ready()) {
+//							String line = reader.readLine();
+//							String[] values = line.split("\\s+");
+//							String key = values[0] +"\t" + values[1];
+//							
+//							String label = values[0];
+//			                String date = values[1];
+//			                Integer sum = 0;
+//			                Integer count = 0;
+//			                if (result.containsKey(key)) {
+//			                    sum = (Integer) ((Object[]) result.get(key))[2];
+//			                    count = (Integer) ((Object[]) result.get(key))[3];
+//			                } else {
+//
+//			                }
+//			                result.put(key, new Object[]{label, date,
+//			                        sum + Integer.parseInt(values[2]), count + 1});
+//			            }
+////			            ArrayList arrayList = new ArrayList(result.values());
+//						reader.close();
+//						}
+//					 catch (Exception e1) {
+//						
+//						e1.printStackTrace();
+//					}
+//					
+//				}
+//				 
+//			 });      
 		 
 //		 deleteBtn.addActionListener(new ActionListener() {
 //
@@ -271,74 +381,3 @@ public class DetailsPanel extends JPanel {
 		 
 		 
 		 
-//		 GridBagConstraints gc = new GridBagConstraints();
-//		 
-//		 gc.anchor = GridBagConstraints.FIRST_LINE_END;
-//			
-//			gc.weightx = 1;
-//			gc.weighty =1;
-//			
-//			gc.gridx = 0;
-//			gc.gridy = 0;
-//			
-//			add (firstNameLabel,gc);
-//			
-//			gc.gridx = 0;
-//			gc.gridy = 1;
-//			add (lastNameLabel,gc);
-//			
-//			gc.gridx = 0;
-//			gc.gridy = 2;
-//			
-//			add (adressLabel,gc);
-//			
-//			gc.gridx = 0;
-//			gc.gridy = 3;
-//			
-//			add (companyLabel,gc);
-//			
-//			gc.gridx = 0;
-//			gc.gridy = 4;
-//			add(salaryLabel,gc);
-//			
-//		//Second column
-//			
-//			gc.weightx = 1;
-//			gc.weighty =1;
-//			
-//			gc.gridx = 1;
-//			gc.gridy = 0;
-//			
-//			add (firstNameField,gc);
-//			
-//			gc.gridx = 1;
-//			gc.gridy = 1;
-//			
-//			add (lastNameField,gc);
-//			
-//			gc.gridx = 1;
-//			gc.gridy = 2;
-//			
-//			add (adressField,gc);
-//			
-//			gc.gridx = 1;
-//			gc.gridy = 3;
-//			
-//			add (companyField,gc);
-//			gc.gridx = 1;
-//			gc.gridy = 4;
-//			
-//			add(salaryField,gc);
-//	
-//		//Buttons
-//			gc.weighty = 1;
-
-//		
-//		gc.weighty = 10;
-//		
-//		gc.anchor = GridBagConstraints.FIRST_LINE_START;
-//		gc.gridx = 1;
-//		gc.gridy = 4;
-//		add (addBtn,gc);
-		
-  
